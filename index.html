@@ -7,7 +7,7 @@
 	<link rel="stylesheet" type="text/css" href="https://cdn.mxpnl.com/libs/mixpanel-platform/build/mixpanel-platform.v0.latest.min.css">
 	<script src="https://cdn.mxpnl.com/libs/mixpanel-platform/build/mixpanel-platform.v0.latest.min.js"></script>
 	<style>
-		.header, {
+		.header {
   			font-size: 20px;
   			color: #747d94;
   			font-weight: bold;
@@ -16,6 +16,9 @@
 		    padding-right: 50px;
 		    padding-bottom: 50px;
 		    padding-left: 50px;
+  		}
+  		.table {
+  			padding-top: 30px;
   		}
   		.mixpanel-platform-chart_header {
   			width: 981px;
@@ -147,22 +150,46 @@ function makeRequest(request_data, callback) {
 	params.limit = 15;
 	MP.api.query(endpoint, params).done(function(results) {
 		var res = results.data.values;
-		// if (endpoint.indexOf('segmentation') != -1)
-		// 	res = results.data.values;
-		// if (endpoint.indexOf('properties/toptypes') != -1)
-		// 	res = results;
-		// debugger;
+		var week_res = {};
+		_.each(res, function(prop_result, prop) {
+			var most_recent_day = _.chain(prop_result)
+									.keys()
+									.map(key => new Date(key).valueOf())
+									.max()
+									.value();
+			var r = _.map(prop_result, function(val, key) {
+				var obj = {};
+				obj[key] = val;
+				obj.value = val;
+				obj.date_diff = (most_recent_day - new Date(key).valueOf()) / 86400000;
+				return obj;
+			});
+			var week_results = {};
+			_.each(r, function(item) {
+				var week_num = 4;
+				if (item.date_diff < 7)
+					week_num = 0;
+				else if (item.date_diff < 14)
+					week_num = 1;
+				else if (item.date_diff < 21)
+					week_num = 2;
+				else if (item.date_diff < 28)
+					week_num = 3;
+				var key_string = week_num == 1? ' week ago' : ' weeks ago';
+				week_results[week_num + key_string] = week_results[week_num + key_string] + item.value || item.value;
+			});
+			week_res[prop] = week_results;
+		});
 		var graphName = 'graph_' + name_without_spaces;
 		var tableName = 'table_' + name_without_spaces;
 		$('<div class="header" id="' + name_without_spaces + '">' + name + '</div>').appendTo('body');
 		$('<div class="graph" id="' + graphName + '"></div>').appendTo('body');
 		$('<div class="table" id="' + tableName + '"></div>').appendTo('body');
 		var graph = $('#' + graphName).MPChart({chartType: 'line', chart : {height: 200}});
-		var table = $('#' + tableName).MPTable({showPercentages: true, firstColHeader: 'Event'});
+		var table = $('#' + tableName).MPTable({showPercentages: true, firstColHeader: 'Value'});
 		graph.MPChart('setData', res);
-		table.MPTable('setData', res);
+		table.MPTable('setData', week_res);
 		callback();
-		//setTimeout(function() {callback()}, 300);
 	});
 }
 
