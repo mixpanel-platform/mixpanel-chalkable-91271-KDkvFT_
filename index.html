@@ -151,6 +151,7 @@ function makeRequest(request_data, callback) {
 	MP.api.query(endpoint, params).done(function(results) {
 		var res = results.data.values;
 		var week_res = {};
+		var rolling_res = {};
 		_.each(res, function(prop_result, prop) {
 			var most_recent_day = _.chain(prop_result)
 									.keys()
@@ -161,6 +162,7 @@ function makeRequest(request_data, callback) {
 				var obj = {};
 				obj[key] = val;
 				obj.value = val;
+				obj.key = key;
 				obj.date_diff = (most_recent_day - new Date(key).valueOf()) / 86400000;
 				return obj;
 			});
@@ -179,6 +181,16 @@ function makeRequest(request_data, callback) {
 				week_results[week_num + key_string] = week_results[week_num + key_string] + item.value || item.value;
 			});
 			week_res[prop] = week_results;
+			rolling_res[prop] = {};
+			var placeholders = [];
+			_.chain(r)
+			 .sortBy(item => -1 * item.date_diff)
+			 .each(function(item) {
+			 	placeholders.push(item.value);
+			 	if (placeholders.length > 7)
+			 		placeholders.shift();
+			 	rolling_res[prop][item.key] = _.sum(placeholders) / placeholders.length;
+			});
 		});
 		var graphName = 'graph_' + name_without_spaces;
 		var tableName = 'table_' + name_without_spaces;
@@ -187,7 +199,7 @@ function makeRequest(request_data, callback) {
 		$('<div class="table" id="' + tableName + '"></div>').appendTo('body');
 		var graph = $('#' + graphName).MPChart({chartType: 'line', chart : {height: 200}});
 		var table = $('#' + tableName).MPTable({showPercentages: true, firstColHeader: 'Value'});
-		graph.MPChart('setData', res);
+		graph.MPChart('setData', rolling_res);
 		table.MPTable('setData', week_res);
 		callback();
 	});
