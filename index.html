@@ -136,15 +136,18 @@ var queries = [
 		unit: 'day'
 	}
 ];
+queries = _.map(queries, function(query, index) {query.index = index; return query;});
 
+custom_event_map = {};
 
 function makeRequest(request_data, callback) {
 	var name = request_data.name;
 	var name_without_spaces = name.replace(/ /g,"_");
+	name = request_data.index + 1 + ': ' + name;
 	var endpoint = request_data.endpoint;
 	var params = _.omit(request_data, ['name', 'endpoint']);
 	var to_date = new Date().valueOf();
-	var from_date = to_date - (29 * 86400000);
+	var from_date = to_date - (29 * 24 * 60 * 60 * 1000);
 	params.to_date = new Date(to_date).toISOString().slice(0, -14);
 	params.from_date = new Date(from_date).toISOString().slice(0, -14);
 	params.limit = 15;
@@ -153,6 +156,7 @@ function makeRequest(request_data, callback) {
 		var week_res = {};
 		var rolling_res = {};
 		_.each(res, function(prop_result, prop) {
+			prop = custom_event_map[prop]? custom_event_map[prop] + ' (custom)' : prop;
 			var most_recent_day = _.chain(prop_result)
 									.keys()
 									.map(key => new Date(key).valueOf())
@@ -163,7 +167,7 @@ function makeRequest(request_data, callback) {
 				obj[key] = val;
 				obj.value = val;
 				obj.key = key;
-				obj.date_diff = (most_recent_day - new Date(key).valueOf()) / 86400000;
+				obj.date_diff = (most_recent_day - new Date(key).valueOf()) / (24 * 60 * 60 * 1000);
 				return obj;
 			});
 			var week_results = {};
@@ -205,11 +209,22 @@ function makeRequest(request_data, callback) {
 	});
 }
 
-
-(function recursive_request_maker(request_list, index) {
+function recursive_request_maker(request_list, index) {
 	if (request_list[index])
 		makeRequest(request_list[index], function() {recursive_request_maker(request_list, index + 1);});
-})(queries, 0);
+}
+
+MP.api.query('https://mixpanel.com/api/2.0/custom_events').done(function(json) {
+	_.each(json.custom_events, function(ce) {
+		custom_event_map['$custom_event:' + ce.id] = ce.name;
+	});
+	recursive_request_maker(queries, 0);
+});
+
+
+
+
+
 
 </script>
 </body>
