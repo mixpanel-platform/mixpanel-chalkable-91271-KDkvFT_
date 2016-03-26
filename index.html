@@ -1,15 +1,177 @@
-<!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <link rel="stylesheet" type="text/css" href="https://cdn.mxpnl.com/libs/mixpanel-platform/css/reset.css">
-    <link rel="stylesheet" type="text/css" href="https://cdn.mxpnl.com/libs/mixpanel-platform/build/mixpanel-platform.v0.latest.min.css">
-    <script src="https://cdn.mxpnl.com/libs/mixpanel-platform/build/mixpanel-platform.v0.latest.min.js"></script>
-  </head>
-  <body class="mixpanel-platform-body">
-    <h1>Hello, World!</h1>
-    <script>
-      // Run queries and display results here
-    </script>
-  </body>
+<head>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
+	<script src="//code.jquery.com/jquery-1.12.0.min.js"></script>
+	<script src="//code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="https://cdn.mxpnl.com/libs/mixpanel-platform/css/reset.css">
+	<link rel="stylesheet" type="text/css" href="https://cdn.mxpnl.com/libs/mixpanel-platform/build/mixpanel-platform.v0.latest.min.css">
+	<script src="https://cdn.mxpnl.com/libs/mixpanel-platform/build/mixpanel-platform.v0.latest.min.js"></script>
+	<style>
+		.header, .table {
+  			font-size: 20px;
+  			color: #747d94;
+  			font-weight: bold;
+  			text-align: center;
+  			padding-top: 50px;
+		    padding-right: 50px;
+		    padding-bottom: 50px;
+		    padding-left: 50px;
+  		}
+  		.mixpanel-platform-chart_header {
+  			width: 950px;
+  			height: 385px;
+  		}
+	</style>
+</head>
+<body>
+<script>
+var queries = [
+	{
+		name: 'all districts - classroom only',
+		endpoint: 'https://mixpanel.com/api/2.0/segmentation',
+		event: '$custom_event:81307',
+		type: 'unique',
+		where: '(user["Study Center Customer"] == "False")',
+		limit: 255,
+		on: 'user["district"]',
+		unit: 'day'
+	},
+	{
+		name: 'all districts - logins',
+		endpoint: 'https://mixpanel.com/api/2.0/segmentation',
+		event: '$custom_event:81307',
+		type: 'unique',
+		limit: 255,
+		on: 'user["role"]',
+		unit: 'day'
+	},
+	{
+		name: 'all districts - top events',
+		endpoint: 'https://mixpanel.com/api/2.0/events/',
+		event: ["performed action: announcement/updateAnnouncementGradeFromGrid", "performed action: grading/loadGradingPeriodGridSummary", "performed action: feed/getAnnouncements", "performed action: attendance/classList", "performed action: announcement/updateAnnouncementGrade", "performed action: announcement/save", "performed action: feed/doToList", "Logged in", "performed action: feed/list", "performed action: grading/summaryGrid", "performed action: announcement/add", "set attendance"],
+		type: 'unique',
+		unit: 'day'
+	},
+	{
+		name: 'district - logins',
+		endpoint: 'https://mixpanel.com/api/2.0/segmentation',
+		event: '$custom_event:81307',
+		type: 'unique',
+		where: '("BESSEMER CITY SCHOOLS" in user["district"]) and (defined (user["district"]))',
+		limit: 255,
+		on: 'user["role"]',
+		unit: 'day'
+	},
+	{
+		name: 'district - reports',
+		endpoint: 'https://mixpanel.com/api/2.0/segmentation',
+		event: 'created report',
+		type: 'unique',
+		where: '("BESSEMER CITY SCHOOLS" in user["district"]) and (defined (user["district"]))',
+		limit: 255,
+		on: 'properties["report-type"]',
+		unit: 'day'
+	},
+	{
+		name: 'district - top events',
+		endpoint: 'https://mixpanel.com/api/2.0/events/',
+		event: ["$custom_event:81307", "set attendance", "Attached App", "Attached document", "set discipline", "attached standard", "created new lesson plan", "created report", "copied lesson plan from gallery", "saved lesson plan to gallery", "attached assessment"],
+		type: 'unique',
+		where: '("BESSEMER CITY SCHOOLS" in user["district"]) and (defined (user["district"]))',
+		unit: 'day'
+	},
+	{
+		name: 'pilots - logins',
+		endpoint: 'https://mixpanel.com/api/2.0/segmentation',
+		event: '$custom_event:130749',
+		type: 'unique',
+		limit: 255,
+		on: 'user["district"]',
+		unit: 'day'
+	},
+	{
+		name: 'pilots - reports',
+		endpoint: 'https://mixpanel.com/api/2.0/segmentation',
+		event: '$custom_event:130767',
+		type: 'unique',
+		limit: 255,
+		on: 'user["district"]',
+		unit: 'day'
+	},
+	{
+		name: 'pilots - top events',
+		endpoint: 'https://mixpanel.com/api/2.0/events/',
+		event: ["$custom_event:81307", "set attendance", "Attached document", "Attached App", "set discipline", "attached standard", "created new lesson plan", "created report", "copied lesson plan from gallery", "saved lesson plan to gallery", "attached assessment"],
+		type: 'unique',
+		where: '("sastsuma city schools" in user["district"]) and (defined (user["district"])) or ("EUFAULA CITY SCHOOLS" in user["district"]) and (defined (user["district"])) or ("HOUSTON COUNTY" in user["district"]) and (defined (user["district"])) or ("TRUSSVILLE CITY SCHOOLS" in user["district"]) and (defined (user["district"])) or ("CHAMBERS COUNTY BOE" in user["district"]) and (defined (user["district"]))',
+		unit: 'day'
+	},
+	{
+		name: 'prod - logins',
+		endpoint: 'https://mixpanel.com/api/2.0/segmentation',
+		event: '$custom_event:157797',
+		type: 'unique',
+		limit: 255,
+		on: 'user["district"]',
+		unit: 'day'
+	},
+	{
+		name: 'prod - reports',
+		endpoint: 'https://mixpanel.com/api/2.0/segmentation',
+		event: '$custom_event:130813',
+		type: 'unique',
+		limit: 255,
+		on: 'user["district"]',
+		unit: 'day'
+	},
+	{
+		name: 'prod - top events',
+		endpoint: 'https://mixpanel.com/api/2.0/events/',
+		event: ["$custom_event:81307", "set attendance", "Attached document", "Attached App", "set discipline", "attached standard", "created new lesson plan", "created report", "copied lesson plan from gallery", "saved lesson plan to gallery", "attached assessment"],
+		type: 'unique',
+		where: '("Birmingham City Schools" in user["district"]) and (defined (user["district"])) or ("CALHOUN COUNTY BOARD OF EDUCATION" in user["district"]) and (defined (user["district"])) or ("Columbus Municipal School District" in user["district"]) and (defined (user["district"])) or ("NEWTON COUNTY SCHOOLS" in user["district"]) and (defined (user["district"])) or ("BOAZ CITY SCHOOLS" in user["district"]) and (defined (user["district"])) or ("BESSEMER CITY SCHOOLS" in user["district"]) and (defined (user["district"])) or ("MARENGO COUNTY" in user["district"]) and (defined (user["district"])) or ("Spokane R-VII" in user["district"]) and (defined (user["district"])) or ("McDonald County R-1 Schools" in user["district"]) and (defined (user["district"])) or ("Meadowbrook Academy" in user["district"]) and (defined (user["district"])) or ("JUSTICE PUBLIC SCHOOL" in user["district"]) and (defined (user["district"])) or ("Durand CUSD 322" in user["district"]) and (defined (user["district"])) or ("UNION SCHOOL CORPORATION" in user["district"]) and (defined (user["district"])) or ("Holy Redeemer" in user["district"]) and (defined (user["district"]))',
+		unit: 'day'
+	}
+];
+
+
+function makeRequest(request_data, callback) {
+	var name = request_data.name;
+	var name_without_spaces = name.replace(/ /g,"_");
+	var endpoint = request_data.endpoint;
+	var params = _.omit(request_data, ['name', 'endpoint']);
+	var to_date = new Date().valueOf();
+	var from_date = to_date - (29 * 86400000);
+	params.to_date = new Date(to_date).toISOString().slice(0, -14);
+	params.from_date = new Date(from_date).toISOString().slice(0, -14);
+	params.limit = 15;
+	MP.api.query(endpoint, params).done(function(results) {
+		var res = results.data.values;
+		// if (endpoint.indexOf('segmentation') != -1)
+		// 	res = results.data.values;
+		// if (endpoint.indexOf('properties/toptypes') != -1)
+		// 	res = results;
+		// debugger;
+		var graphName = 'graph_' + name_without_spaces;
+		var tableName = 'table_' + name_without_spaces;
+		$('<div class="header" id="' + name_without_spaces + '">' + name + '</div>').appendTo('body');
+		$('<div class="graph" id="' + graphName + '"></div>').appendTo('body');
+		$('<div class="table" id="' + tableName + '"></div>').appendTo('body');
+		var graph = $('#' + graphName).MPChart({chartType: 'line', chart : {height: 200}});
+		var table = $('#' + tableName).MPTable({showPercentages: true, firstColHeader: 'Event'});
+		graph.MPChart('setData', res);
+		table.MPTable('setData', res);
+		callback();
+		//setTimeout(function() {callback()}, 300);
+	});
+}
+
+
+(function recursive_request_maker(request_list, index) {
+	if (request_list[index])
+		makeRequest(request_list[index], function() {recursive_request_maker(request_list, index + 1);});
+})(queries, 0);
+
+</script>
+</body>
 </html>
