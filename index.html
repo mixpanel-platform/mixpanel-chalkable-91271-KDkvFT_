@@ -85,6 +85,14 @@ var queries = [
 		unit: 'day'
 	},
 	{
+		name: 'district - top events2',
+		endpoint: 'https://mixpanel.com/api/2.0/events/',
+		event: ["$custom_event:81307", "set attendance", "Attached App", "Attached document", "set discipline", "attached standard", "created new lesson plan", "created report", "copied lesson plan from gallery", "saved lesson plan to gallery", "attached assessment"],
+		type: 'unique',
+		where: '("Birmingham" in user["district"]) and (defined (user["district"]))',
+		unit: 'day'
+	},
+	{
 		name: 'pilots - logins',
 		endpoint: 'https://mixpanel.com/api/2.0/segmentation',
 		event: '$custom_event:130749',
